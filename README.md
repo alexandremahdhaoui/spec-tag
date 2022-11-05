@@ -1,92 +1,213 @@
-# spec-tag
+# Tag Specification
+
+## Architecture & Terminology
+
+A tag is made of 2 things:
+- a `key`
+- a `value`
+
+Before diving deeper into tags , let's have a quick overview of what our Platform Architecture is made of.
+Overall, it is built out of 2 different kinds: `Services` & `Instances`.
 
 
+### Services
+- a Service in the platform world is a module, a pipeline or a template that will be used to construct/launch `instances`.
+- a Platform Service can be understood as a Class. The platform is responsible for providing reliable abstractions,classes.
 
-## Getting started
+### Instances
+- An Instance is a single piece of infrastructure or code derived from a `Service`.
+- In other words, the `instance` is a `service-consumer`.
+- An instance can be:
+    - one of your app built on top of the `platform-chart` service.
+    - a MongoDB cluster.
+    - a kubernetes cluster itself.
 
-To make it easy for you to get started with GitLab, here's a list of recommended next steps.
+    - NB: To be Microservice/Cloud-native compliant `Instances` must be as stateless as possible.
+      i.e. the same configuration code "should" topics the same instance.
 
-Already a pro? Just edit this README.md and make it your own. Want to make it easy? [Use the template at the bottom](#editing-this-readme)!
+### Tag Consumer,Producer
 
-## Add your files
+Terminology:
+- The Platform & AWS Billing account will be considered `tag-consumer`.
+- Anything creating a resource will be considered a `tag-producer`.
 
-- [ ] [Create](https://docs.gitlab.com/ee/user/project/repository/web_editor.html#create-a-file) or [upload](https://docs.gitlab.com/ee/user/project/repository/web_editor.html#upload-a-file) files
-- [ ] [Add files using the command line](https://docs.gitlab.com/ee/gitlab-basics/add-file.html#add-a-file-using-the-command-line) or push an existing Git repository with the following command:
+However, if I'm trying to create a new resource which is under the hood created by a Platform Service, am I even considered
+as a `tag-producer`?
 
+We need to split this `tag-producer` in at least 2 different kinds:
+- `service-tag-producer`
+- `instance-tag-producer`
+
+
+A tag have a `key` & a `value`. Key should adhere 100% to the convention
+
+### Joining,Splitting character terminology:
+
+- Keys must be joined by `/`. Slash `/` specifies relation between parent (left element) to child (right element)
+- Values must be joined by `:` or split by `,`.
+    - Colon `:` specifies relation between parent (left element) to child (right element).
+    - Comma `,` lists several unrelated elements.
+
+
+### Responsibilities
+
+#### Tag Keys
+
+| type                  | Responsible | Accountable | Consulted | Informed |
+|:----------------------|:------------|:------------|:----------|:---------|
+| tag-consumer          |             | ✔️          | ✔️        | ✔️       |
+| service-tag-producer  | ✔️          | ✔️          |           |          |
+| instance-tag-producer | (✔️)        |             |           |          |
+
+Meaning of:
+- Responsible:
+    - `service-tag-producer` should enforce Tag Keys are conform.
+    - `instance-tag-producer` will become responsible if:
+        - implement any miss-usage.
+        - Does not use the right Platform Service. Implementing forks or self-made solutions is at your own risks.
+- Accountable:
+    - `tag-consumer` should provide quality documentation to the `service-tag-producer`.
+    - `service-tag-producer` is not accountable for any miss-usage of `instance-tag-producer`.
+- Consulted:
+    - `tag-consumer` should provide quality documentation & tools to enable the `service-tag-producer` to enforce conventions.
+- Informed:
+    - Tag-keys referenced by `service-tag-producer` & `instance-tag-producer` are conform to the conventions.
+
+
+#### Tag Values
+| type                  | Responsible | Accountable | Consulted | Informed |
+|:----------------------|:------------|:------------|:----------|:---------|
+| tag-consumer          | ️           |             |           | ✔️       |
+| service-tag-producer  |             | ✔️          | ✔️        |          |
+| instance-tag-producer | ✔️          |             |           |          |
+
+Meaning of:
+- Responsible:
+    - `instance-tag-producer` must provide the right tag-values.
+    - `service-tag-producer` can in some occasion enforce tag-values, but is not responsible for any miss-usage.
+- Accountable:
+    - `service-tag-producer` must ensure the validation of the tag-values produced by the `instance-tag-producer` (`service-consumer`)
+- Consulted:
+    - `service-tag-producer` should provide quality documentation & tools to enable the `instance-tag-producer` to manage the tag-values
+- Informed:
+    - Tag-values referenced by `service-tag-producer` & `instance-tag-producer` are conform to the conventions.
+
+The values are the responsibilities of the `tag-producer`
+
+## Tags naming convention
+
+### Keys
+
+Keys are always :
+- prefixed by `platform`. (Be aware `aws` key prefix is used by AWS internally & could lead to unpredictable behaviors)
+- followed by a Category: e.g. tech, business, automation, security...
+- followed by a Subcategory or Subfield: e.g. name, version, id...
+
+### Technical tags for Resource Organization
+
+    Tags are a good way to organize AWS resources in the AWS Management Console. 
+    You can configure tags to be displayed with resources, and can search and filter by tag. 
+    With the AWS Resource Groups service, you can create groups of AWS resources based on one or more tags or portions of tags. 
+    You can also create groups based on their occurrence in an AWS CloudFormation stack. 
+    Using Resource Groups and Tag Editor, you can consolidate and view data for applications that consist of multiple services, resources, and Regions in one place.
+
+
+#### Instance "tech" tags
+
+| key                                                  | example (value)                               | description (value)                                                          |
+|------------------------------------------------------|-----------------------------------------------|------------------------------------------------------------------------------|
+| `platform/tech/instance/name`                        | eks-efk                                       | Identify resources that are related to a specific application.               |
+| `platform/tech/instance/version`                     | v2.1.0                                        | Version of the instance                                                      |
+| `platform/tech/instance/resource/domain`             | domain_a                                      | Domain where the resource was instantiated.                                  |
+| `platform/tech/instance/resource/name`               | persistentVolumeClaim                         | Identify individual resources of an instance.                                |
+| `platform/tech/instance/resource/namespace`          | aws:eks:eu-central-1:domain_a:prod:monitoring | Namespace where the resource was instantiated.                               |
+| `platform/tech/instance/resource/region`             | eu-central-1                                  | Region where the resource was instantiated.                                  |
+| `platform/tech/instance/resource/role`               | persistence                                   | Describe the function of a particular resource of an instance.               |
+| `platform/tech/instance/resource/stage`              | prod                                          | Stage where the resource was instantiated.                                   |
+| `platform/tech/instance/resource/created-by/domain`  | platform                                      | Domain that created this instance/resource.                                  |
+| `platform/tech/instance/resource/created-by/service` | argocd                                        | "Meta Service" which instantiated this resource. (e.g. auto-devops pipeline) |
+
+#### Service "tech" Tags.
+
+| key                                    | example (value)   | description (value)                                                                                             |
+|----------------------------------------|-------------------|-----------------------------------------------------------------------------------------------------------------|
+| `platform/tech/service/name`           | eks-storage-class | Platform service used to instantiate this specific resource.                                                    |
+| `platform/tech/service/version`        | v0.1.0            | Version of the platform service used to construct this `instance`.                                              |
+| `platform/tech/service/parent/name`    | eks-common        | Platform services used to construct this `service`'s `instance`. From parent to children, joined by colons `:`. |
+| `platform/tech/service/parent/version` | v0.1.0            | Version of the parents. Respectively from parent to children, joined by colons `:`.                             |
+
+### Tags for Business & Cost Allocation
+
+
+| key                         | example (value) | description (value)                                                                                    |
+|-----------------------------|-----------------|--------------------------------------------------------------------------------------------------------|
+| `platform/business/owner`   | platform        | Identify who is responsible for the instance.                                                          |
+| `platform/business/project` | monitoring      | Identify business projects that the instance supports.                                                 |
+| `platform/business/sla`     | 42              | SLA level of the business function it supports.                                                        |
+| `platform/business/tenant`  | 1a24aaf7        | Identify a specific tenant that a particular group of instances serves.                                |
+| `platform/business/unit`    | domain_a        | Identify the cost center or business unit associated with an instance (domain or other business unit). |
+
+Difference between Domain & Organizational Unit:
+- a domain is a whole business level unit:
+    - e.g. `domain_a`.
+    - a domain spans `stages` (& `regions` of course).
+    - is an abstractions containing all staged accounts of this business level unit.
+    - does not contain or manage any cloud infrastructure. It's an abstraction.
+- an organizational unit is a fully qualified identifier of an AWS account:
+    - e.g. `domain_a-dev`.
+    - directly contains & manages cloud infrastructure.
+
+### Tags for Automation
+
+    Resource or service-specific tags are often used to filter resources during automation activities.
+    Automation tags are used to opt in or opt out of automated tasks or to identify specific versions of resources to archive, update, or delete.
+    For example, you can run automated start or stop scripts that turn off development environments during nonbusiness hours to reduce costs.
+    In this scenario, Amazon Elastic Compute Cloud (Amazon EC2) instance tags are a simple way to identify instances to opt out of this action.
+    For scripts that find and delete stale, out-of-date, or rolling Amazon EBS snapshots, snapshot tags can add an extra dimension of search criteria.
+
+| key                             | example (value)         | description (value)                                                                                                                                |
+|---------------------------------|-------------------------|----------------------------------------------------------------------------------------------------------------------------------------------------|
+| `platform/automation/date-time` | Reserved for future use | Identify the date or time a resource should be started, stopped, deleted, or rotated.                                                              |
+| `platform/automation/opt-in`    | Reserved for future use | Indicate whether an instance should be included in an automated activity such as starting, stopping, or resizing.                                  |
+| `platform/automation/opt-out`   | Reserved for future use | Indicate whether an instance should be included in an automated activity such as starting, stopping, or resizing.                                  |
+| `platform/automation/security`  | Reserved for future use | Determine requirements, such as encryption or enabling of Amazon VPC flow logs; identify route tables or security groups that need extra scrutiny. |
+
+### Tags for Concurrency matters
+
+
+| key                     | example (value) | description (value)                                                                                                   |
+|-------------------------|-----------------|-----------------------------------------------------------------------------------------------------------------------|
+| `platform/mutex/author` | 1a24aaf7        | Process id of the last author of a lock,release.                                                                      |
+| `platform/mutex/locked` | false           | If `locked == true`, an application should be able to stop its execution in order to let the holder release the lock. |
+| `platform/mutex/ts`     | 1667681752      | Timestamp of the last lock,release (in Unix epoch).                                                                   |
+
+
+### Tags for Security & access control
+
+| key                                 | example (value) | description (value)                                                                                   |
+|-------------------------------------|-----------------|-------------------------------------------------------------------------------------------------------|
+| `platform/security/compliance`      |                 | An identifier for workloads that must adhere to specific compliance requirements (e.g. DB in France). |
+| `platform/security/confidentiality` |                 | An identifier for the specific data confidentiality level an instance supports.                       |
+
+
+## Values of the `platform/instance/namespace` tag
+
+The `platform/tech/instance/namespace` must be a "fully qualified" namespace:
+
+| subfields | example                 | description                                      |
+|-----------|-------------------------|--------------------------------------------------|
+| Provider  | `aws`                   | Name of the provider.                            |
+| Service   | `eks`                   | Provider's service used "behind the scene".      |
+| L-0       | `eu-central-1`          | "Level `0` Namespace" of the provider's service. |
+| L-1       | `domain_a`              | "Level `1` Namespace" of the provider's service. |
+| L-2       | `prod`                  | "Level `2` Namespace" of the provider's service. |
+| L-3       | `monitoring`            | "Level `3` Namespace" of the provider's service. |
+| L-n       | `something-very-nested` | "Level `n` Namespace" of the provider's service. |
+
+
+NB: Subfields must be joined with a colon because they express a level of relation.
+
+Example:
 ```
-cd existing_repo
-git remote add origin https://gitlab.com/alexandre.mahdhaoui/spec-tag.git
-git branch -M main
-git push -uf origin main
+aws:eks:eu-central-1:domain_a:prod:monitoring
 ```
-
-## Integrate with your tools
-
-- [ ] [Set up project integrations](https://gitlab.com/alexandre.mahdhaoui/spec-tag/-/settings/integrations)
-
-## Collaborate with your team
-
-- [ ] [Invite team members and collaborators](https://docs.gitlab.com/ee/user/project/members/)
-- [ ] [Create a new merge request](https://docs.gitlab.com/ee/user/project/merge_requests/creating_merge_requests.html)
-- [ ] [Automatically close issues from merge requests](https://docs.gitlab.com/ee/user/project/issues/managing_issues.html#closing-issues-automatically)
-- [ ] [Enable merge request approvals](https://docs.gitlab.com/ee/user/project/merge_requests/approvals/)
-- [ ] [Automatically merge when pipeline succeeds](https://docs.gitlab.com/ee/user/project/merge_requests/merge_when_pipeline_succeeds.html)
-
-## Test and Deploy
-
-Use the built-in continuous integration in GitLab.
-
-- [ ] [Get started with GitLab CI/CD](https://docs.gitlab.com/ee/ci/quick_start/index.html)
-- [ ] [Analyze your code for known vulnerabilities with Static Application Security Testing(SAST)](https://docs.gitlab.com/ee/user/application_security/sast/)
-- [ ] [Deploy to Kubernetes, Amazon EC2, or Amazon ECS using Auto Deploy](https://docs.gitlab.com/ee/topics/autodevops/requirements.html)
-- [ ] [Use pull-based deployments for improved Kubernetes management](https://docs.gitlab.com/ee/user/clusters/agent/)
-- [ ] [Set up protected environments](https://docs.gitlab.com/ee/ci/environments/protected_environments.html)
-
-***
-
-# Editing this README
-
-When you're ready to make this README your own, just edit this file and use the handy template below (or feel free to structure it however you want - this is just a starting point!). Thank you to [makeareadme.com](https://www.makeareadme.com/) for this template.
-
-## Suggestions for a good README
-Every project is different, so consider which of these sections apply to yours. The sections used in the template are suggestions for most open source projects. Also keep in mind that while a README can be too long and detailed, too long is better than too short. If you think your README is too long, consider utilizing another form of documentation rather than cutting out information.
-
-## Name
-Choose a self-explaining name for your project.
-
-## Description
-Let people know what your project can do specifically. Provide context and add a link to any reference visitors might be unfamiliar with. A list of Features or a Background subsection can also be added here. If there are alternatives to your project, this is a good place to list differentiating factors.
-
-## Badges
-On some READMEs, you may see small images that convey metadata, such as whether or not all the tests are passing for the project. You can use Shields to add some to your README. Many services also have instructions for adding a badge.
-
-## Visuals
-Depending on what you are making, it can be a good idea to include screenshots or even a video (you'll frequently see GIFs rather than actual videos). Tools like ttygif can help, but check out Asciinema for a more sophisticated method.
-
-## Installation
-Within a particular ecosystem, there may be a common way of installing things, such as using Yarn, NuGet, or Homebrew. However, consider the possibility that whoever is reading your README is a novice and would like more guidance. Listing specific steps helps remove ambiguity and gets people to using your project as quickly as possible. If it only runs in a specific context like a particular programming language version or operating system or has dependencies that have to be installed manually, also add a Requirements subsection.
-
-## Usage
-Use examples liberally, and show the expected output if you can. It's helpful to have inline the smallest example of usage that you can demonstrate, while providing links to more sophisticated examples if they are too long to reasonably include in the README.
-
-## Support
-Tell people where they can go to for help. It can be any combination of an issue tracker, a chat room, an email address, etc.
-
-## Roadmap
-If you have ideas for releases in the future, it is a good idea to list them in the README.
-
-## Contributing
-State if you are open to contributions and what your requirements are for accepting them.
-
-For people who want to make changes to your project, it's helpful to have some documentation on how to get started. Perhaps there is a script that they should run or some environment variables that they need to set. Make these steps explicit. These instructions could also be useful to your future self.
-
-You can also document commands to lint the code or run tests. These steps help to ensure high code quality and reduce the likelihood that the changes inadvertently break something. Having instructions for running tests is especially helpful if it requires external setup, such as starting a Selenium server for testing in a browser.
-
-## Authors and acknowledgment
-Show your appreciation to those who have contributed to the project.
-
-## License
-For open source projects, say how it is licensed.
-
-## Project status
-If you have run out of energy or time for your project, put a note at the top of the README saying that development has slowed down or stopped completely. Someone may choose to fork your project or volunteer to step in as a maintainer or owner, allowing your project to keep going. You can also make an explicit request for maintainers.
