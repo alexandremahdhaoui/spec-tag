@@ -116,36 +116,36 @@ Keys are always :
 
 | key                                                  | example (value)                               | description (value)                                                          |
 |------------------------------------------------------|-----------------------------------------------|------------------------------------------------------------------------------|
-| `platform/tech/instance/name`                        | eks-efk                                       | Identify resources that are related to a specific application.               |
-| `platform/tech/instance/version`                     | v2.1.0                                        | Version of the instance                                                      |
-| `platform/tech/instance/resource/domain`             | domain_a                                      | Domain where the resource was instantiated.                                  |
-| `platform/tech/instance/resource/name`               | persistentVolumeClaim                         | Identify individual resources of an instance.                                |
-| `platform/tech/instance/resource/namespace`          | aws:eks:eu-central-1:domain_a:prod:monitoring | Namespace where the resource was instantiated.                               |
-| `platform/tech/instance/resource/region`             | eu-central-1                                  | Region where the resource was instantiated.                                  |
-| `platform/tech/instance/resource/role`               | persistence                                   | Describe the function of a particular resource of an instance.               |
-| `platform/tech/instance/resource/stage`              | prod                                          | Stage where the resource was instantiated.                                   |
-| `platform/tech/instance/resource/created-by/domain`  | platform                                      | Domain that created this instance/resource.                                  |
-| `platform/tech/instance/resource/created-by/service` | argocd                                        | "Meta Service" which instantiated this resource. (e.g. auto-devops pipeline) |
+| `instance/name`                        | eks-efk                                       | Identify resources that are related to a specific application.               |
+| `instance/version`                     | v2.1.0                                        | Version of the instance                                                      |
+| `instance/resource/domain`             | domain_a                                      | Domain where the resource was instantiated.                                  |
+| `instance/resource/name`               | persistentVolumeClaim                         | Identify individual resources of an instance.                                |
+| `instance/resource/namespace`          | aws:eks:eu-central-1:domain_a:prod:monitoring | Namespace where the resource was instantiated.                               |
+| `instance/resource/region`             | eu-central-1                                  | Region where the resource was instantiated.                                  |
+| `instance/resource/role`               | persistence                                   | Describe the function of a particular resource of an instance.               |
+| `instance/resource/stage`              | prod                                          | Stage where the resource was instantiated.                                   |
+| `instance/resource/created-by/domain`  | platform                                      | Domain that created this instance/resource.                                  |
+| `instance/resource/created-by/service` | argocd                                        | "Meta Service" which instantiated this resource. (e.g. auto-devops pipeline) |
 
 #### Service "tech" Tags.
 
 | key                                    | example (value)   | description (value)                                                                                             |
 |----------------------------------------|-------------------|-----------------------------------------------------------------------------------------------------------------|
-| `platform/tech/service/name`           | eks-storage-class | Platform service used to instantiate this specific resource.                                                    |
-| `platform/tech/service/version`        | v0.1.0            | Version of the platform service used to construct this `instance`.                                              |
-| `platform/tech/service/parent/name`    | eks-common        | Platform services used to construct this `service`'s `instance`. From parent to children, joined by colons `:`. |
-| `platform/tech/service/parent/version` | v0.1.0            | Version of the parents. Respectively from parent to children, joined by colons `:`.                             |
+| `service/name`           | eks-storage-class | Platform service used to instantiate this specific resource.                                                    |
+| `service/version`        | v0.1.0            | Version of the platform service used to construct this `instance`.                                              |
+| `service/parent/name`    | eks-common        | Platform services used to construct this `service`'s `instance`. From parent to children, joined by colons `:`. |
+| `service/parent/version` | v0.1.0            | Version of the parents. Respectively from parent to children, joined by colons `:`.                             |
 
 ### Tags for Business & Cost Allocation
 
 
 | key                         | example (value) | description (value)                                                                                    |
 |-----------------------------|-----------------|--------------------------------------------------------------------------------------------------------|
-| `platform/business/owner`   | platform        | Identify who is responsible for the instance.                                                          |
-| `platform/business/project` | monitoring      | Identify business projects that the instance supports.                                                 |
-| `platform/business/sla`     | 42              | SLA level of the business function it supports.                                                        |
-| `platform/business/tenant`  | 1a24aaf7        | Identify a specific tenant that a particular group of instances serves.                                |
-| `platform/business/unit`    | domain_a        | Identify the cost center or business unit associated with an instance (domain or other business unit). |
+| `business/owner`   | platform        | Identify who is responsible for the instance.                                                          |
+| `business/project` | monitoring      | Identify business projects that the instance supports.                                                 |
+| `business/sla`     | 42              | SLA level of the business function it supports.                                                        |
+| `business/tenant`  | 1a24aaf7        | Identify a specific tenant that a particular group of instances serves.                                |
+| `business/unit`    | domain_a        | Identify the cost center or business unit associated with an instance (domain or other business unit). |
 
 Difference between Domain & Organizational Unit:
 - a domain is a whole business level unit:
@@ -167,32 +167,32 @@ Difference between Domain & Organizational Unit:
 
 | key                             | example (value)         | description (value)                                                                                                                                |
 |---------------------------------|-------------------------|----------------------------------------------------------------------------------------------------------------------------------------------------|
-| `platform/automation/date-time` | Reserved for future use | Identify the date or time a resource should be started, stopped, deleted, or rotated.                                                              |
-| `platform/automation/opt-in`    | Reserved for future use | Indicate whether an instance should be included in an automated activity such as starting, stopping, or resizing.                                  |
-| `platform/automation/opt-out`   | Reserved for future use | Indicate whether an instance should be included in an automated activity such as starting, stopping, or resizing.                                  |
-| `platform/automation/security`  | Reserved for future use | Determine requirements, such as encryption or enabling of Amazon VPC flow logs; identify route tables or security groups that need extra scrutiny. |
+| `automation/date-time` | Reserved for future use | Identify the date or time a resource should be started, stopped, deleted, or rotated.                                                              |
+| `automation/opt-in`    | Reserved for future use | Indicate whether an instance should be included in an automated activity such as starting, stopping, or resizing.                                  |
+| `automation/opt-out`   | Reserved for future use | Indicate whether an instance should be included in an automated activity such as starting, stopping, or resizing.                                  |
+| `automation/security`  | Reserved for future use | Determine requirements, such as encryption or enabling of Amazon VPC flow logs; identify route tables or security groups that need extra scrutiny. |
 
 ### Tags for Concurrency matters
 
 
 | key                     | example (value) | description (value)                                                                                                   |
 |-------------------------|-----------------|-----------------------------------------------------------------------------------------------------------------------|
-| `platform/mutex/author` | 1a24aaf7        | Process id of the last author of a lock,release.                                                                      |
-| `platform/mutex/locked` | false           | If `locked == true`, an application should be able to stop its execution in order to let the holder release the lock. |
-| `platform/mutex/timestamp`     | 1667681752      | Timestamp of the last lock,release (in Unix epoch).                                                                   |
+| `mutex/author` | 1a24aaf7        | Process id of the last author of a lock,release.                                                                      |
+| `mutex/locked` | false           | If `locked == true`, an application should be able to stop its execution in order to let the holder release the lock. |
+| `mutex/timestamp`     | 1667681752      | Timestamp of the last lock,release (in Unix epoch).                                                                   |
 
 
 ### Tags for Security & access control
 
 | key                                 | example (value) | description (value)                                                                                   |
 |-------------------------------------|-----------------|-------------------------------------------------------------------------------------------------------|
-| `platform/security/compliance`      |                 | An identifier for workloads that must adhere to specific compliance requirements (e.g. DB in France). |
-| `platform/security/confidentiality` |                 | An identifier for the specific data confidentiality level an instance supports.                       |
+| `security/compliance`      |                 | An identifier for workloads that must adhere to specific compliance requirements (e.g. DB in France). |
+| `security/confidentiality` |                 | An identifier for the specific data confidentiality level an instance supports.                       |
 
 
-## Values of the `platform/instance/namespace` tag
+## Values of the `instance/namespace` tag
 
-The `platform/tech/instance/namespace` must be a "fully qualified" namespace:
+The `instance/namespace` must be a "fully qualified" namespace:
 
 | subfields | example                 | description                                      |
 |-----------|-------------------------|--------------------------------------------------|
