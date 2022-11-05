@@ -179,7 +179,7 @@ Difference between Domain & Organizational Unit:
 |-------------------------|-----------------|-----------------------------------------------------------------------------------------------------------------------|
 | `platform/mutex/author` | 1a24aaf7        | Process id of the last author of a lock,release.                                                                      |
 | `platform/mutex/locked` | false           | If `locked == true`, an application should be able to stop its execution in order to let the holder release the lock. |
-| `platform/mutex/ts`     | 1667681752      | Timestamp of the last lock,release (in Unix epoch).                                                                   |
+| `platform/mutex/timestamp`     | 1667681752      | Timestamp of the last lock,release (in Unix epoch).                                                                   |
 
 
 ### Tags for Security & access control
